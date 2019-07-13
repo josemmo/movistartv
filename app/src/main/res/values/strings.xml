@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name" translatable="false">Movistar TV</string>
+    <string name="rich_input_label">@string/app_name</string>
+    <string name="rich_setup_first_step_description">"TV Channels from your company"</string>
+    <string name="rich_setup_add_channel">Add Channels</string>
+    <string name="rich_setup_cancel">Cancel Setup</string>
+</resources>
