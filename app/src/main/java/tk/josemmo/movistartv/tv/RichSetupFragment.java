@@ -19,8 +19,8 @@ package tk.josemmo.movistartv.tv;
 import android.graphics.drawable.Drawable;
 import android.media.tv.TvInputInfo;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v17.leanback.widget.GuidanceStylist.Guidance;
+import androidx.annotation.NonNull;
+import androidx.leanback.widget.GuidanceStylist.Guidance;
 
 import com.google.android.media.tv.companionlibrary.setup.ChannelSetupStepFragment;
 
