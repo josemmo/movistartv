@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class UdpClient {
     private static final String LOGTAG = "MCAST-SOCKET";
@@ -49,7 +50,7 @@ public class UdpClient {
      * Download raw data from socket
      * @return Downloaded files in raw data
      */
-    public HashMap<String, byte[]> downloadRaw() throws Exception {
+    public TreeMap<String, byte[]> downloadRaw() throws Exception {
         startSocket();
         return getRawFiles();
     }
@@ -63,7 +64,7 @@ public class UdpClient {
         DatagramPacket dgram = new DatagramPacket(buffer, buffer.length);
         MulticastSocket socket = new MulticastSocket(port);
         Log.d(LOGTAG, "Default buffer size is " + socket.getReceiveBufferSize());
-        socket.setReceiveBufferSize(buffer.length * 300);
+        socket.setReceiveBufferSize(buffer.length * 600);
         Log.d(LOGTAG, "New buffer size is " + socket.getReceiveBufferSize());
         InetAddress mcastAddr = InetAddress.getByName(host);
         socket.joinGroup(mcastAddr);
@@ -72,7 +73,6 @@ public class UdpClient {
         while (!finished) {
             socket.receive(dgram);
             finished = parseChunk(dgram.getData());
-            dgram.setLength(buffer.length);
         }
 
         socket.leaveGroup(mcastAddr);
@@ -86,13 +86,6 @@ public class UdpClient {
      * @return   Finished downloading all chunks
      */
     private boolean parseChunk(byte[] b) {
-        // TODO: clean comments
-        //StringBuilder sb = new StringBuilder(b.length * 2);
-        //for (byte elem : b) sb.append(String.format("%02x", elem));
-        //Log.d(LOGTAG, sb.toString());
-
-        //int end = b[0] & 0xff;
-        //int size = (b[3] & 0xff) | ((b[2] & 0xff) << 8) | ((b[1] & 0x0f) << 16);
         int fileType = b[4] & 0xff;
         int fileId = ((b[5] & 0xff) << 8) | (b[6] & 0xff);
         int chunkIndex = (((b[8] & 0xff) << 8) | (b[9] & 0xff)) / 0x10;
@@ -101,11 +94,10 @@ public class UdpClient {
             Log.e(LOGTAG, "Ignoring bad chunk (" + chunkIndex + " out of " + numOfChunks +")");
             return false;
         }
-        //Log.d(LOGTAG, "Chunk #" + chunkIndex + " out of " + numOfChunks);
 
         // Extract payload
         int endOfPayload = b.length - 1;
-        while (b[endOfPayload] == 0) {
+        while (b[endOfPayload] == 0x00) {
             --endOfPayload;
         }
         if (endOfPayload <= 12) {
@@ -113,7 +105,6 @@ public class UdpClient {
             return false;
         }
         byte[] payload = Arrays.copyOfRange(b, 12, endOfPayload+1);
-        //Log.d(LOGTAG, "Expected size of " + size + " bytes, received " + (endOfPayload-12) + " bytes");
 
         // Save to memory
         String key = fileType + "-" + fileId;
@@ -169,8 +160,8 @@ public class UdpClient {
      * Get downloaded raw files
      * @return Download files as raw bytes
      */
-    private HashMap<String,byte[]> getRawFiles() throws IOException {
-        HashMap<String,byte[]> res = new HashMap<>();
+    private TreeMap<String,byte[]> getRawFiles() throws IOException {
+        TreeMap<String,byte[]> res = new TreeMap<>();
 
         for (Map.Entry<String,ArrayList<byte[]>> entry : files.entrySet()) {
             String filename = entry.getKey();

@@ -8,7 +8,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.TreeMap;
 
 public class EpgDownloader extends Thread {
     private static int instanceCount;
@@ -33,7 +33,7 @@ public class EpgDownloader extends Thread {
         try {
             // Download data from socket
             UdpClient socket = new UdpClient(entrypoint);
-            HashMap<String,byte[]> rawFiles = socket.downloadRaw();
+            TreeMap<String,byte[]> rawFiles = socket.downloadRaw();
 
             // Parse EPG files
             epgFiles = new ArrayList<>();
@@ -73,8 +73,7 @@ public class EpgDownloader extends Thread {
         //Log.d(LOGTAG, sb.toString());
 
         // Parse header
-        //int size = ((b[1] & 0xff) << 8) | (b[2] & 0xff);
-        int serviceName = ((b[3] & 0xff) << 8) | (b[4] & 0xff);
+        int epgServiceName = ((b[3] & 0xff) << 8) | (b[4] & 0xff);
         int serviceVersion = b[5] & 0xff;
         int urlLength = b[6] & 0xff;
         String serviceUrl = new String(Arrays.copyOfRange(b, 7, 7+urlLength));
@@ -131,15 +130,14 @@ public class EpgDownloader extends Thread {
 
                 i += offset + 31;
             } catch (Exception e) {
-                Log.e(LOGTAG, "Corrupted body of program, skipping what's left of this file");
-                e.printStackTrace();
+                // We have arrived at the end of the file or has ended abruptly
                 break;
             }
         }
 
         // Create response
         JSONObject file = new JSONObject();
-        file.put("serviceName", serviceName);
+        file.put("epgServiceName", epgServiceName);
         file.put("serviceVersion", serviceVersion);
         file.put("serviceUrl", serviceUrl);
         file.put("programs", programs);

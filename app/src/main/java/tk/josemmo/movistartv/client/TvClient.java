@@ -23,11 +23,12 @@ import org.minidns.record.Record;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
-import java.io.StringReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -172,7 +173,6 @@ public class TvClient {
         for (int i=0; i<res.length; i++) {
             res[i] = res[i].split("</ServiceDiscovery>", 2)[0];
             res[i] += "</ServiceDiscovery>";
-            res[i] = res[i].replaceAll("\n", "");
             if (res[i].contains("</ServiceList>")) {
                 serviceList = parseXmlString(res[i]);
             } else if (res[i].contains("</PackageDiscovery>")) {
@@ -226,6 +226,14 @@ public class TvClient {
             Element service = services.get(serviceName);
             Element info = (Element) service.getElementsByTagName("SI").item(0);
 
+            int epgServiceName = serviceName;
+            NodeList replacements = service.getElementsByTagName("ReplacementService");
+            if (replacements.getLength() > 0) {
+                Element replacement = (Element) replacements.item(0);
+                replacement = (Element) replacement.getElementsByTagName("TextualIdentifier").item(0);
+                epgServiceName = Integer.parseInt(replacement.getAttribute("ServiceName"));
+            }
+
             Element location = (Element) service.getElementsByTagName("ServiceLocation").item(0);
             location = (Element) location.getElementsByTagName("IPMulticastAddress").item(0);
             String address = location.getAttribute("Address") + ":" + location.getAttribute("Port");
@@ -240,6 +248,7 @@ public class TvClient {
             JSONObject channel = new JSONObject();
             channel.put("dial", dial);
             channel.put("serviceName", serviceName);
+            channel.put("epgServiceName", epgServiceName);
             channel.put("mCastAddress", address);
             channel.put("name", name);
             channel.put("shortName", shortName);
@@ -258,10 +267,9 @@ public class TvClient {
      * @return           DOM document
      */
     private Document parseXmlString(String xmlString) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        InputSource inputSource = new InputSource(new StringReader(xmlString));
-        Document doc = builder.parse(inputSource);
+        DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        InputStream stream = new ByteArrayInputStream(xmlString.getBytes(StandardCharsets.UTF_8));
+        Document doc = builder.parse(stream);
         doc.getDocumentElement().normalize();
         return doc;
     }
@@ -321,11 +329,11 @@ public class TvClient {
         SparseArray<ArrayList<JSONObject>> res = new SparseArray<>();
         for (int i=0; i<workers.length; i++) {
             for (JSONObject epgFile : workers[i].getEpgFiles()) {
-                int serviceName = epgFile.getInt("serviceName");
-                ArrayList<JSONObject> programs = res.get(serviceName, null);
+                int epgServiceName = epgFile.getInt("epgServiceName");
+                ArrayList<JSONObject> programs = res.get(epgServiceName, null);
                 if (programs == null) {
                     programs = new ArrayList<>();
-                    res.put(serviceName, programs);
+                    res.put(epgServiceName, programs);
                 }
                 for (int j=0; j<epgFile.getJSONArray("programs").length(); j++) {
                     JSONObject program = epgFile.getJSONArray("programs").getJSONObject(j);

@@ -55,6 +55,7 @@ public class JobService extends EpgSyncJobService {
                 InternalProviderData data = new InternalProviderData();
                 data.put("serviceName", channel.getInt("serviceName"));
                 data.put("mCastAddress", channel.getString("mCastAddress"));
+                data.put("epgServiceName", channel.getInt("epgServiceName"));
                 parsedChannels.add(new Channel.Builder()
                     .setOriginalNetworkId(dial)
                     .setDisplayName(channel.getString("name"))
@@ -88,18 +89,20 @@ public class JobService extends EpgSyncJobService {
         }
 
         // Return programs for channel
-        ArrayList<Program> res = new ArrayList<>();
+        List<Program> res = new ArrayList<>();
         try {
             InternalProviderData internalData = channel.getInternalProviderData();
-            int serviceName = Integer.parseInt(internalData.get("serviceName").toString());
-            Log.d(LOGTAG, "Received a petition for the EPG of serviceName=" + serviceName);
+            int epgServiceName = Integer.parseInt(internalData.get("epgServiceName").toString());
+            Log.d(LOGTAG, "Received petition for the EPG of epgServiceName=" + epgServiceName);
 
-            for (JSONObject data : epg.get(serviceName, new ArrayList<JSONObject>())) {
+            for (JSONObject data : epg.get(epgServiceName, new ArrayList<JSONObject>())) {
                 try {
+                    long startTime = data.getLong("start") * 1000;
+                    long endTime = data.getLong("end") * 1000;
                     res.add(new Program.Builder()
                             .setTitle(data.getString("title"))
-                            .setStartTimeUtcMillis(data.getInt("start") * 1000)
-                            .setEndTimeUtcMillis(data.getInt("end") * 1000)
+                            .setStartTimeUtcMillis(startTime)
+                            .setEndTimeUtcMillis(endTime)
                             .build()
                     );
                 } catch (JSONException e2) {
@@ -108,9 +111,9 @@ public class JobService extends EpgSyncJobService {
                 }
             }
 
-            Log.d(LOGTAG, "Finished getting EPG for serviceName=" + serviceName);
+            Log.d(LOGTAG, "Finished getting EPG for epgServiceName=" + epgServiceName);
         } catch (InternalProviderData.ParseException e) {
-            Log.e(LOGTAG, "Failed to get serviceName from channel");
+            Log.e(LOGTAG, "Failed to get epgServiceName from channel");
         }
         return res;
     }
