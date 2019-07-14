@@ -3958,15 +3958,16 @@ href="urn:miviewtv:cs:GenreCS:2007:16"> <urn:Name>Cine</urn:Name> </Genre>
 href="urn:dvb:metadata:cs:ParentalGuidanceCS:2007:1"> <mpeg7:Name>No rating
 available</mpeg7:Name> </mpeg7:ParentalRating> </ParentalGuidance> </SI> </SingleService>
 </ServiceList> </BroadcastDiscovery> </ServiceDiscovery>
-0��o="81921"> <Name
-Language="ENG">Prueba GEO RED</Name> <ShortName Language="ENG">PGERD</ShortName>
-<Description Language="ENG">Pruebas GEO RED</Description> <Genre
+0��/ParentalGuidance> </SI> </SingleService>
+<SingleService> <ServiceLocation> <IPMulticastAddress Port="8208"
+Address="239.0.7.193" Type="STB IPTV" /> </ServiceLocation> <TextualIdentifier
+ServiceName="4417" /> <SI ServiceType="1" ServiceInfo="65536"> <Name
+Language="ENG">Prueba CATV SD</Name> <ShortName Language="ENG">CARSD</ShortName>
+<Description Language="ENG">Pruebas CATV SD</Description> <Genre
 href="urn:miviewtv:cs:GenreCS:2007:16"> <urn:Name>Cine</urn:Name> </Genre>
 <ParentalGuidance> <mpeg7:ParentalRating
 href="urn:dvb:metadata:cs:ParentalGuidanceCS:2007:1"> <mpeg7:Name>No rating
-available</mpeg7:Name> </mpeg7:ParentalRating> </ParentalGuidance> </SI> <AudioAttributes>
-<urn:MixType href=""> <urn:Name>S</urn:Name> </urn:MixType> <urn:AudioLanguage>Español</urn:AudioLanguage>
-</AudioAttributes> </SingleService> <SingleService> <ServiceLocation> <IPMulticastAddress
-Port="8208" Address="239.0.6.56" Type="STB IPTV" /> </ServiceLocation> <TextualIdentifier
-ServiceName="4463" /> <SI ServiceType="25" ServiceInfo="67190785"> <Name
-Language="ENG">Prueba STCE Cosmo HD</Name> <ShortName Language="ENG">PSTCH<
+available</mpeg7:Name> </mpeg7:ParentalRating> </ParentalGuidance> </SI> </SingleService>
+<SingleService> <ServiceLocation> <IPMulticastAddress Port="8208"
+Address="239.0.5.124" Type="STB IPTV" /> </ServiceLocation> <TextualIdentifier
+ServiceName="4418" /> <SI ServiceType="25" ServiceInf
