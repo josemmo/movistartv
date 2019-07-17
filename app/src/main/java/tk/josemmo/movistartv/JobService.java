@@ -53,8 +53,8 @@ public class JobService extends EpgSyncJobService {
             for (JSONObject channel : channels) {
                 int dial = channel.getInt("dial");
                 InternalProviderData data = new InternalProviderData();
+                data.setVideoUrl(channel.getString("mCastAddress"));
                 data.put("serviceName", channel.getInt("serviceName"));
-                data.put("mCastAddress", channel.getString("mCastAddress"));
                 data.put("epgServiceName", channel.getInt("epgServiceName"));
                 parsedChannels.add(new Channel.Builder()
                     .setOriginalNetworkId(dial)

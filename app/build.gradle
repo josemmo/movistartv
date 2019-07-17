@@ -15,6 +15,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+ext {
+    exoplayerVersion = '2.10.2'
 }
 
 dependencies {
@@ -26,6 +33,10 @@ dependencies {
         exclude group: "com.google.android.gms"
         exclude group: "com.android.support"
     }
-    //implementation 'com.google.android.exoplayer:exoplayer:2.10.2'
     implementation 'org.minidns:minidns-hla:0.3.3'
+    implementation "com.google.android.exoplayer:exoplayer-core:$exoplayerVersion"
+    implementation "com.google.android.exoplayer:exoplayer-ui:$exoplayerVersion"
+    implementation("com.github.PaulWoitaschek.ExoPlayer-Extensions:extension-ffmpeg:$exoplayerVersion") {
+        transitive = false
+    }
 }
