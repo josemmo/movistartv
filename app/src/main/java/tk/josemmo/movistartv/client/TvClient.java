@@ -14,6 +14,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.RequestFuture;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.minidns.DnsClient;
 import org.minidns.dnsmessage.DnsMessage;
@@ -54,6 +55,7 @@ public class TvClient {
     private List<String> tvPackages;
     private String resBaseUri;
     private String tvChannelLogoPath;
+    private String tvCoversPath;
 
     /**
      * TvClient constructor
@@ -120,19 +122,18 @@ public class TvClient {
 
         // Parse data from JSON responses
         try {
-            demarcation = client.getJSONObject("resultData")
-                    .getInt("demarcation");
-            String[] tvPackages = client.getJSONObject("resultData")
-                    .getString("tvPackages")
-                    .split("\\|");
+            client = client.getJSONObject("resultData");
+            platform = platform.getJSONObject("resultData");
+            config = config.getJSONObject("resultData");
+
+            demarcation = client.getInt("demarcation");
+            String[] tvPackages = client.getString("tvPackages").split("\\|");
             this.tvPackages = Arrays.asList(tvPackages);
-            dvbEntrypoint = platform.getJSONObject("resultData")
-                    .getJSONObject("dvbConfig")
-                    .getString("dvbipiEntryPoint");
-            resBaseUri = resolveHostname(platform.getJSONObject("resultData")
-                    .getString("RES_BASE_URI"));
-            tvChannelLogoPath = config.getJSONObject("resultData")
-                    .getString("tvChannelLogoPath");
+            dvbEntrypoint = platform.getJSONObject("dvbConfig").getString("dvbipiEntryPoint");
+            resBaseUri = resolveHostname(platform.getString("RES_BASE_URI"));
+            tvChannelLogoPath = config.getString("tvChannelLogoPath");
+            tvCoversPath = config.getString("tvCoversPath") +
+                    config.getString("portraitSubPath") + "290x429/";
         } catch (Exception e) {
             Log.e(LOGTAG, "Exception when configuring instance");
             e.printStackTrace();
@@ -280,8 +281,12 @@ public class TvClient {
      * @return EPG entrypoints
      */
     @NonNull
-    private String[] getEpgEntrypoints() {
-        return prefs.getString(EPG_ENTRYPOINT_KEY, "").split("\\|");
+    private JSONObject getEpgEntrypoints() {
+        try {
+            return new JSONObject(prefs.getString(EPG_ENTRYPOINT_KEY, "{}"));
+        } catch (Exception e) {
+            return new JSONObject();
+        }
     }
 
 
@@ -290,20 +295,33 @@ public class TvClient {
      * @param doc XML document
      */
     @NonNull
-    private void saveEpgEntrypoints(Document doc) {
-        ArrayList<String> epgEntrypoints = new ArrayList<>();
+    private void saveEpgEntrypoints(Document doc) throws Exception {
+        JSONObject epgEntrypoints = new JSONObject();
 
         NodeList epgNodes = doc.getElementsByTagName("DVBBINSTP");
         for (int i=0; i<epgNodes.getLength(); i++) {
             Element elem = (Element) epgNodes.item(i);
+
+            // Get EPG entrypoint address
             String ipAddress = elem.getAttribute("Address");
             String port = elem.getAttribute("Port");
-            epgEntrypoints.add(ipAddress + ":" + port);
+            String entrypoint = ipAddress + ":" + port;
+
+            // Get segments
+            JSONArray segments = new JSONArray();
+            NodeList segmentNodes = elem.getElementsByTagName("Segment");
+            for (int j=0; j<segmentNodes.getLength(); j++) {
+                Element segment = (Element) segmentNodes.item(j);
+                int segmentId = Integer.decode(segment.getAttribute("ID"));
+                segments.put(segmentId);
+            }
+
+            // Add to JSON object
+            epgEntrypoints.put(entrypoint, segments);
         }
 
-        prefs.edit()
-                .putString(EPG_ENTRYPOINT_KEY, TextUtils.join("|", epgEntrypoints))
-                .apply();
+        // Persist in SharedPreferences
+        prefs.edit().putString(EPG_ENTRYPOINT_KEY, epgEntrypoints.toString()).apply();
     }
 
 
@@ -312,13 +330,20 @@ public class TvClient {
      * @return EPG data
      */
     public SparseArray<ArrayList<JSONObject>> getEpgData() throws Exception {
-        String[] entrypoints = getEpgEntrypoints();
+        JSONObject entrypoints = getEpgEntrypoints();
 
         // Create and start EPG threads
-        int numOfWorkers = Math.min(MAX_EPG_DAYS, entrypoints.length);
+        int numOfWorkers = Math.min(MAX_EPG_DAYS, entrypoints.length());
         EpgDownloader[] workers = new EpgDownloader[numOfWorkers];
         for (int i=0; i<workers.length; i++) {
-            workers[i] = new EpgDownloader(entrypoints[i]);
+            String entrypointAddr = entrypoints.names().getString(i);
+            JSONArray segmentsArray = entrypoints.getJSONArray(entrypointAddr);
+            int[] segments = new int[segmentsArray.length()];
+            for (int j=0; j<segmentsArray.length(); j++) {
+                segments[j] = segmentsArray.getInt(j);
+            }
+
+            workers[i] = new EpgDownloader(entrypointAddr, segments);
             workers[i].start();
         }
         for (int i=0; i<workers.length; i++) {

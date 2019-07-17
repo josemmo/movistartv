@@ -6,6 +6,7 @@ import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.TreeMap;
@@ -15,14 +16,16 @@ public class EpgDownloader extends Thread {
 
     private String LOGTAG;
     private final String entrypoint;
+    private final int[] segments;
     private ArrayList<JSONObject> epgFiles;
 
     /**
      * EpgDownloader constructor
      * @param entrypoint EPG entrypoint address
      */
-    public EpgDownloader(String entrypoint) {
+    public EpgDownloader(String entrypoint, int[] segments) {
         this.entrypoint = entrypoint;
+        this.segments = segments;
         LOGTAG = "EpgWorker#" + instanceCount;
         instanceCount++;
     }
@@ -34,6 +37,24 @@ public class EpgDownloader extends Thread {
             // Download data from socket
             UdpClient socket = new UdpClient(entrypoint);
             TreeMap<String,byte[]> rawFiles = socket.downloadRaw();
+
+            // Join files in sequential order
+            /*
+            ArrayList<byte[]> rawJoinedFiles = new ArrayList<>();
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            for (int segmentId : segments) {
+                byte[] b = rawFiles.get("241-" + segmentId);
+                boolean isStart = (b[0] != 0) || (b[1] != 0) || (b[2] != 0) || (b[3] != 0);
+                if (isStart && buffer.size() > 0) {
+                    rawJoinedFiles.add(buffer.toByteArray());
+                    buffer.reset();
+                }
+                buffer.write(b, isStart ? 0 : 4, isStart ? b.length : b.length-4);
+            }
+            if (buffer.size() > 0) {
+                rawJoinedFiles.add(buffer.toByteArray());
+            }
+            */
 
             // Parse EPG files
             epgFiles = new ArrayList<>();
@@ -67,10 +88,11 @@ public class EpgDownloader extends Thread {
      */
     @Nullable
     private JSONObject parseEpgFile(byte[] b) throws Exception {
-        // TODO: clean comments
-        //StringBuilder sb = new StringBuilder(b.length * 2);
-        //for (byte elem : b) sb.append(String.format("%02x", elem));
-        //Log.d(LOGTAG, sb.toString());
+        // TODO: for testing
+        StringBuilder sb = new StringBuilder(b.length * 2);
+        for (byte elem : b) sb.append(String.format("%02x", elem));
+
+        byte[] stover = "default|STOVER".getBytes();
 
         // Parse header
         int epgServiceName = ((b[3] & 0xff) << 8) | (b[4] & 0xff);
@@ -78,6 +100,7 @@ public class EpgDownloader extends Thread {
         int urlLength = b[6] & 0xff;
         String serviceUrl = new String(Arrays.copyOfRange(b, 7, 7+urlLength));
         if (!serviceUrl.contains(".imagenio.es")) {
+            Log.e(LOGTAG, "Invalid service URL for EPG file");
             return null;
         }
 
@@ -97,8 +120,6 @@ public class EpgDownloader extends Thread {
                 String title = parseEpgString(Arrays.copyOfRange(b, i+32, i+32+titleLength));
 
                 int offset = 32 + titleLength;
-                boolean isTvShow = (b[i + offset] == (byte) 0xf1);
-                //if (isTvShow) {
                 int tvShowId = ((b[i + offset + 5] & 0xff) << 8) | (b[i + offset + 6] & 0xff);
                 int episode = b[i + offset + 8] & 0xff;
                 int year = ((b[i + offset + 9] & 0xff) << 8) | (b[i + offset + 10] & 0xff);
@@ -106,10 +127,8 @@ public class EpgDownloader extends Thread {
                 int tvShowNameLength = b[i + offset + 12] & 0xff;
                 String tvShowName = parseEpgString(Arrays.copyOfRange(b, i+offset+13,
                         i+offset+13+tvShowNameLength));
-                i += tvShowNameLength;
-                //}
 
-                if (pId < 0 || start < 0 || duration <= 0 || year > 9999) {
+                if (pId < 0 || start < 0 || duration <= 0 || year > 3000) {
                     throw new IllegalArgumentException("Corrupted bytes for program data");
                 }
 
@@ -121,16 +140,28 @@ public class EpgDownloader extends Thread {
                 programData.put("ageRating", ageRating);
                 programData.put("title", title);
                 programData.put("year", year);
-                programData.put("isTvShow", isTvShow);
                 programData.put("tvShowId", tvShowId);
                 programData.put("season", season);
                 programData.put("episode", episode);
                 programData.put("tvShowName", tvShowName);
                 programs.put(programData);
 
-                i += offset + 31;
+                // Find next program first byte
+                i += offset + tvShowNameLength;
+                while (i < b.length-stover.length) {
+                    boolean foundStover = true;
+                    for (int j=0; j<stover.length; j++) {
+                        if (b[i+j] != stover[j]) {
+                            foundStover = false;
+                            break;
+                        }
+                    }
+                    if (foundStover) break;
+                    i++;
+                }
+                i += stover.length;
             } catch (Exception e) {
-                // We have arrived at the end of the file or has ended abruptly
+                // The file has ended abruptly or is corrupted
                 break;
             }
         }
