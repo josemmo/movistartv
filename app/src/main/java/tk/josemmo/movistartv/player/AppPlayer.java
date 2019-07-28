@@ -19,16 +19,17 @@ package tk.josemmo.movistartv.player;
 import android.content.Context;
 import android.media.PlaybackParams;
 import android.net.Uri;
+import android.util.Log;
 import android.view.Surface;
 
-import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.ProgressiveMediaSource;
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.util.Util;
 import com.google.android.media.tv.companionlibrary.TvPlayer;
+
+import org.videolan.libvlc.IVLCVout;
+import org.videolan.libvlc.LibVLC;
+import org.videolan.libvlc.Media;
+import org.videolan.libvlc.MediaPlayer;
+
+import java.util.ArrayList;
 
 /**
  * A wrapper around ExoPlayer which implements TvPlayer. This is the class that actually renders
@@ -36,18 +37,24 @@ import com.google.android.media.tv.companionlibrary.TvPlayer;
  */
 public class AppPlayer implements TvPlayer {
     private Context context;
-    private SimpleExoPlayer player;
     private Uri videoUrl;
+    private LibVLC libVlc;
+    private MediaPlayer player;
 
     /**
-     * AppPlayer constuctor
+     * AppPlayer constructor
      * @param context  Context
      * @param videoUrl Video stream URL
      */
     public AppPlayer(Context context, Uri videoUrl) {
         this.context = context;
-        this.player = ExoPlayerFactory.newSimpleInstance(context);
         this.videoUrl = videoUrl;
+
+        final ArrayList<String> args = new ArrayList<>();
+        args.add("--file-caching=2000");
+        args.add("-v");
+        libVlc = new LibVLC(context, args);
+        player = new MediaPlayer(libVlc);
     }
 
 
@@ -55,13 +62,13 @@ public class AppPlayer implements TvPlayer {
      * Prepare player
      */
     public void prepare() {
-        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(context,
-                Util.getUserAgent(context,"movistartv")
-        );
-        MediaSource mediaSource = new ProgressiveMediaSource.Factory(dataSourceFactory)
-                .createMediaSource(videoUrl);
+        final Media media = new Media(libVlc, videoUrl);
+        media.setHWDecoderEnabled(true, false);
+        media.addOption(":network-caching=150");
+        media.addOption(":clock-jitter=0");
+        media.addOption(":clock-synchro=0");
 
-        player.prepare(mediaSource);
+        player.setMedia(media);
     }
 
 
@@ -69,16 +76,30 @@ public class AppPlayer implements TvPlayer {
      * Release player
      */
     public void release() {
+        stop();
+        player.getMedia().release();
+        player.getVLCVout().detachViews();
         player.release();
+        libVlc.release();
     }
 
 
     /**
-     * Set play when ready
-     * @param playWhenReady Play when ready
+     * Set surface
+     * @param surface Video surface
      */
-    public void setPlayWhenReady(boolean playWhenReady) {
-        player.setPlayWhenReady(playWhenReady);
+    @Override
+    public void setSurface(Surface surface) {
+        Log.d("VLC_EVENT", "setSurface called with " + surface);
+        final IVLCVout vlcVout = player.getVLCVout();
+
+        if (surface != null) {
+            vlcVout.setVideoSurface(surface, null);
+            vlcVout.setWindowSize(1920, 1080); // TODO
+            vlcVout.attachViews();
+        } else {
+            vlcVout.detachViews();
+        }
     }
 
 
@@ -88,7 +109,7 @@ public class AppPlayer implements TvPlayer {
      */
     @Override
     public long getCurrentPosition() {
-        return player.getCurrentPosition();
+        return (long) (player.getPosition() * 1000);
     }
 
 
@@ -98,7 +119,7 @@ public class AppPlayer implements TvPlayer {
      */
     @Override
     public long getDuration() {
-        return player.getDuration();
+        return player.getLength();
     }
 
 
@@ -107,7 +128,7 @@ public class AppPlayer implements TvPlayer {
      */
     @Override
     public void play() {
-        player.setPlayWhenReady(true);
+        player.play();
     }
 
 
@@ -116,7 +137,7 @@ public class AppPlayer implements TvPlayer {
      */
     @Override
     public void pause() {
-        player.setPlayWhenReady(false);
+        player.pause();
     }
 
 
@@ -134,7 +155,9 @@ public class AppPlayer implements TvPlayer {
      */
     @Override
     public void seekTo(long position) {
-        player.seekTo(position);
+        float pos = (float) position;
+        pos /= 1000;
+        player.setPosition(pos);
     }
 
 
@@ -144,17 +167,7 @@ public class AppPlayer implements TvPlayer {
      */
     @Override
     public void setVolume(float volume) {
-        player.setVolume(volume);
-    }
-
-
-    /**
-     * Set surface
-     * @param surface Video surface
-     */
-    @Override
-    public void setSurface(Surface surface) {
-        player.setVideoSurface(surface);
+        player.setVolume((int) (volume * 100));
     }
 
 

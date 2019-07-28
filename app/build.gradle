@@ -20,10 +20,6 @@ android {
     }
 }
 
-ext {
-    exoplayerVersion = '2.10.2'
-}
-
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.leanback:leanback:1.0.0'
@@ -34,9 +30,5 @@ dependencies {
         exclude group: "com.android.support"
     }
     implementation 'org.minidns:minidns-hla:0.3.3'
-    implementation "com.google.android.exoplayer:exoplayer-core:$exoplayerVersion"
-    implementation "com.google.android.exoplayer:exoplayer-ui:$exoplayerVersion"
-    implementation("com.github.PaulWoitaschek.ExoPlayer-Extensions:extension-ffmpeg:$exoplayerVersion") {
-        transitive = false
-    }
+    implementation 'com.github.masterwok:libvlc-android-sdk:3.0.13'
 }
