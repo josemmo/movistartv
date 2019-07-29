@@ -37,23 +37,17 @@ import java.util.ArrayList;
  * the video, subtitles and all these sorts of things.
  */
 public class AppPlayer implements TvPlayer {
-    private Uri videoUrl;
     private LibVLC libVlc;
     private MediaPlayer player;
 
     /**
      * AppPlayer constructor
-     * @param context  Context
-     * @param videoUrl Video stream URL
+     * @param context Context
      */
-    public AppPlayer(Context context, Uri videoUrl) {
-        this.videoUrl = videoUrl;
-
+    public AppPlayer(Context context) {
         final ArrayList<String> args = new ArrayList<>();
-        args.add("--network-caching=0"); // In milliseconds
-        args.add("--avcodec-skip-frame=0");
-        args.add("--avcodec-skip-idct=0");
-        args.add("--android-display-chroma=RV16");
+        args.add("--network-caching=1000"); // In milliseconds
+        args.add("--android-display-chroma=RV32");
         args.add("--audio-resampler=soxr");
         args.add("-v");
         libVlc = new LibVLC(context, args);
@@ -62,10 +56,20 @@ public class AppPlayer implements TvPlayer {
 
 
     /**
-     * Prepare player
+     * Load media
+     * @param mediaUri Media URI
      */
-    public void prepare() {
-        final Media media = new Media(libVlc, videoUrl);
+    public void loadMedia(String mediaUri) {
+        loadMedia(Uri.parse(mediaUri));
+    }
+
+
+    /**
+     * Load media
+     * @param mediaUri Media URI
+     */
+    public void loadMedia(Uri mediaUri) {
+        final Media media = new Media(libVlc, mediaUri);
         media.setHWDecoderEnabled(true, false);
         player.setMedia(media);
         media.release();

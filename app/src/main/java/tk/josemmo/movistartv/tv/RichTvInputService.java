@@ -71,25 +71,11 @@ public class RichTvInputService extends BaseTvInputService {
 
 
         /**
-         * Create player
-         * @param videoUrl Video URL
+         * Load TV player if released
          */
-        private void createPlayer(Uri videoUrl) {
-            releasePlayer();
-            mPlayer = new AppPlayer(mContext, videoUrl);
-            mPlayer.prepare();
-        }
-
-
-        /**
-         * Release player
-         */
-        private void releasePlayer() {
-            if (mPlayer != null) {
-                mPlayer.setSurface(null);
-                mPlayer.stop();
-                mPlayer.release();
-                mPlayer = null;
+        private void loadTvPlayerIfReleased() {
+            if (mPlayer == null) {
+                mPlayer = new AppPlayer(mContext);
             }
         }
 
@@ -128,7 +114,9 @@ public class RichTvInputService extends BaseTvInputService {
             Log.d(LOGTAG, "onPlayProgram called");
             Uri channelUri = getCurrentChannelUri();
             Channel channel = ModelUtils.getChannel(mContext.getContentResolver(), channelUri);
-            createPlayer(Uri.parse("rtp://@" + channel.getInternalProviderData().getVideoUrl()));
+
+            loadTvPlayerIfReleased();
+            mPlayer.loadMedia("rtp://@" + channel.getInternalProviderData().getVideoUrl());
             mPlayer.play();
             return true;
         }
@@ -159,7 +147,13 @@ public class RichTvInputService extends BaseTvInputService {
         public void onRelease() {
             Log.d(LOGTAG, "onRelease called");
             super.onRelease();
-            releasePlayer();
+
+            if (mPlayer != null) {
+                mPlayer.stop();
+                mPlayer.setSurface(null);
+                mPlayer.release();
+                mPlayer = null;
+            }
         }
 
 
@@ -171,7 +165,10 @@ public class RichTvInputService extends BaseTvInputService {
         public void onBlockContent(TvContentRating rating) {
             Log.d(LOGTAG, "onBlockContent called");
             super.onBlockContent(rating);
-            releasePlayer();
+
+            if (mPlayer != null) {
+                mPlayer.stop();
+            }
         }
     }
 }
