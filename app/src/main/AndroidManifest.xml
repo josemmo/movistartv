@@ -10,9 +10,9 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Feature requirements -->
-    <uses-feature android:name="android.software.leanback" android:required="false" /> <!-- TODO: change -->
+    <uses-feature android:name="android.software.leanback" android:required="true" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
-    <uses-feature android:name="android.software.live_tv" android:required="false" /> <!-- TODO: change -->
+    <uses-feature android:name="android.software.live_tv" android:required="true" />
 
     <application
         android:allowBackup="false"
