@@ -40,7 +40,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 public class TvClient {
     private static final String LOGTAG = "TvClient";
     private static final String EPG_ENTRYPOINT_KEY = "epgEntrypoints";
-    private static final int MAX_EPG_DAYS = 1; // TODO: increase number
+    private static final int MAX_EPG_DAYS = 2;
     private static final String DNS_SERVER = "172.26.23.3";
     private static final String ENDPOINT = "http://172.26.22.23:2001/appserver/mvtv.do?action=";
 
@@ -336,12 +336,25 @@ public class TvClient {
                 }
                 for (int j=0; j<epgFile.getJSONArray("programs").length(); j++) {
                     JSONObject program = epgFile.getJSONArray("programs").getJSONObject(j);
+                    program.put("coverPath", getFullCoverPath(program.getInt("pId")));
                     programs.add(program);
                 }
             }
         }
 
         return res;
+    }
+
+
+    /**
+     * Get full cover path
+     * @param  pId Program ID
+     * @return     Full cover path
+     */
+    @NonNull
+    private String getFullCoverPath(int pId) {
+        String pIdStr = pId + "";
+        return resBaseUri + tvCoversPath + pIdStr.substring(0, 4) + "/" + pIdStr + ".jpg";
     }
 
 }

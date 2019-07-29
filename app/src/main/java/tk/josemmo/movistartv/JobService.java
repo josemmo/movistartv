@@ -1,5 +1,6 @@
 package tk.josemmo.movistartv;
 
+import android.media.tv.TvContentRating;
 import android.net.Uri;
 import android.util.Log;
 import android.util.SparseArray;
@@ -92,12 +93,22 @@ public class JobService extends EpgSyncJobService {
                 try {
                     long startTime = data.getLong("start") * 1000;
                     long endTime = data.getLong("end") * 1000;
-                    res.add(new Program.Builder()
+                    int season = data.getInt("season");
+                    int episode = data.getInt("episode");
+                    TvContentRating[] ratings = new TvContentRating[1];
+                    ratings[0] = parseAgeRating(data.getInt("ageRating"));
+
+                    Program.Builder programBuilder = new Program.Builder()
                             .setTitle(data.getString("title"))
+                            .setPosterArtUri(data.getString("coverPath"))
+                            .setContentRatings(ratings)
                             .setStartTimeUtcMillis(startTime)
-                            .setEndTimeUtcMillis(endTime)
-                            .build()
-                    );
+                            .setEndTimeUtcMillis(endTime);
+                    if (season > 0 && episode > 0) {
+                        programBuilder.setSeasonNumber(season).setEpisodeNumber(episode);
+                    }
+
+                    res.add(programBuilder.build());
                 } catch (JSONException e2) {
                     Log.e(LOGTAG, "Invalid program data, skipping");
                     e2.printStackTrace();
@@ -109,5 +120,33 @@ public class JobService extends EpgSyncJobService {
             Log.e(LOGTAG, "Failed to get epgServiceName from channel");
         }
         return res;
+    }
+
+
+    /**
+     * Parse age rating
+     * @param  code Age rating code
+     * @return      Android TV content rating instance
+     */
+    private TvContentRating parseAgeRating(int code) {
+        String rating = "ES_DVB_ALL";
+        switch (code) {
+            case 3:
+                rating = "ES_DVB_7";
+                break;
+            case 4:
+                rating = "ES_DVB_12";
+                break;
+            case 5:
+                rating = "ES_DVB_16";
+                break;
+            case 6:
+                rating = "ES_DVB_17";
+                break;
+            case 7:
+                rating = "ES_DVB_18";
+                break;
+        }
+        return TvContentRating.createRating("com.android.tv", "ES_DVB", rating);
     }
 }
