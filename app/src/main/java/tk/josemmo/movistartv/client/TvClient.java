@@ -281,12 +281,8 @@ public class TvClient {
      * @return EPG entrypoints
      */
     @NonNull
-    private JSONObject getEpgEntrypoints() {
-        try {
-            return new JSONObject(prefs.getString(EPG_ENTRYPOINT_KEY, "{}"));
-        } catch (Exception e) {
-            return new JSONObject();
-        }
+    private String[] getEpgEntrypoints() {
+        return prefs.getString(EPG_ENTRYPOINT_KEY, "").split("\\|");
     }
 
 
@@ -294,9 +290,8 @@ public class TvClient {
      * Save EPG entrypoints
      * @param doc XML document
      */
-    @NonNull
-    private void saveEpgEntrypoints(Document doc) throws Exception {
-        JSONObject epgEntrypoints = new JSONObject();
+    private void saveEpgEntrypoints(Document doc) {
+        ArrayList<String> epgEntrypoints = new ArrayList<>();
 
         NodeList epgNodes = doc.getElementsByTagName("DVBBINSTP");
         for (int i=0; i<epgNodes.getLength(); i++) {
@@ -305,23 +300,13 @@ public class TvClient {
             // Get EPG entrypoint address
             String ipAddress = elem.getAttribute("Address");
             String port = elem.getAttribute("Port");
-            String entrypoint = ipAddress + ":" + port;
-
-            // Get segments
-            JSONArray segments = new JSONArray();
-            NodeList segmentNodes = elem.getElementsByTagName("Segment");
-            for (int j=0; j<segmentNodes.getLength(); j++) {
-                Element segment = (Element) segmentNodes.item(j);
-                int segmentId = Integer.decode(segment.getAttribute("ID"));
-                segments.put(segmentId);
-            }
-
-            // Add to JSON object
-            epgEntrypoints.put(entrypoint, segments);
+            epgEntrypoints.add(ipAddress + ":" + port);
         }
 
         // Persist in SharedPreferences
-        prefs.edit().putString(EPG_ENTRYPOINT_KEY, epgEntrypoints.toString()).apply();
+        prefs.edit()
+                .putString(EPG_ENTRYPOINT_KEY, TextUtils.join("|", epgEntrypoints))
+                .apply();
     }
 
 
@@ -330,20 +315,13 @@ public class TvClient {
      * @return EPG data
      */
     public SparseArray<ArrayList<JSONObject>> getEpgData() throws Exception {
-        JSONObject entrypoints = getEpgEntrypoints();
+        String[] entrypoints = getEpgEntrypoints();
 
         // Create and start EPG threads
-        int numOfWorkers = Math.min(MAX_EPG_DAYS, entrypoints.length());
+        int numOfWorkers = Math.min(MAX_EPG_DAYS, entrypoints.length);
         EpgDownloader[] workers = new EpgDownloader[numOfWorkers];
         for (int i=0; i<workers.length; i++) {
-            String entrypointAddr = entrypoints.names().getString(i);
-            JSONArray segmentsArray = entrypoints.getJSONArray(entrypointAddr);
-            int[] segments = new int[segmentsArray.length()];
-            for (int j=0; j<segmentsArray.length(); j++) {
-                segments[j] = segmentsArray.getInt(j);
-            }
-
-            workers[i] = new EpgDownloader(entrypointAddr, segments);
+            workers[i] = new EpgDownloader(entrypoints[i]);
             workers[i].start();
         }
         for (int i=0; i<workers.length; i++) {

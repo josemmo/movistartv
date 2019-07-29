@@ -16,16 +16,14 @@ public class EpgDownloader extends Thread {
 
     private String LOGTAG;
     private final String entrypoint;
-    private final int[] segments;
     private ArrayList<JSONObject> epgFiles;
 
     /**
      * EpgDownloader constructor
      * @param entrypoint EPG entrypoint address
      */
-    public EpgDownloader(String entrypoint, int[] segments) {
+    public EpgDownloader(String entrypoint) {
         this.entrypoint = entrypoint;
-        this.segments = segments;
         LOGTAG = "EpgWorker#" + instanceCount;
         instanceCount++;
     }
@@ -37,24 +35,6 @@ public class EpgDownloader extends Thread {
             // Download data from socket
             UdpClient socket = new UdpClient(entrypoint);
             TreeMap<String,byte[]> rawFiles = socket.downloadRaw();
-
-            // Join files in sequential order
-            /*
-            ArrayList<byte[]> rawJoinedFiles = new ArrayList<>();
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            for (int segmentId : segments) {
-                byte[] b = rawFiles.get("241-" + segmentId);
-                boolean isStart = (b[0] != 0) || (b[1] != 0) || (b[2] != 0) || (b[3] != 0);
-                if (isStart && buffer.size() > 0) {
-                    rawJoinedFiles.add(buffer.toByteArray());
-                    buffer.reset();
-                }
-                buffer.write(b, isStart ? 0 : 4, isStart ? b.length : b.length-4);
-            }
-            if (buffer.size() > 0) {
-                rawJoinedFiles.add(buffer.toByteArray());
-            }
-            */
 
             // Parse EPG files
             epgFiles = new ArrayList<>();
