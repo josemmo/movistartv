@@ -48,7 +48,7 @@ public class RichSetupFragment extends ChannelSetupStepFragment<JobService> {
     @Override
     public Guidance onCreateGuidance(@NonNull Bundle savedInstanceState) {
         String title = getString(R.string.rich_input_label);
-        String description = getString(R.string.tif_channel_setup_description);
+        String description = getString(R.string.rich_setup_scanning_description);
         Drawable icon = getActivity().getDrawable(R.mipmap.ic_launcher);
         return new Guidance(title, description, null, icon);
     }
