@@ -12,9 +12,6 @@ import com.google.android.media.tv.companionlibrary.sync.EpgSyncJobService;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,11 +41,7 @@ public class JobService extends EpgSyncJobService {
 
         ArrayList<Channel> parsedChannels = new ArrayList<>();
         try {
-            String[] testData = new String[3];
-            testData[0] = getStringFromStream(getResources().openRawResource(R.raw.test1));
-            testData[1] = getStringFromStream(getResources().openRawResource(R.raw.test2));
-            testData[2] = getStringFromStream(getResources().openRawResource(R.raw.test3));
-            ArrayList<JSONObject> channels = getTvClient().getChannelsList(testData);
+            ArrayList<JSONObject> channels = getTvClient().getChannelsList();
 
             for (JSONObject channel : channels) {
                 int dial = channel.getInt("dial");
@@ -116,17 +109,5 @@ public class JobService extends EpgSyncJobService {
             Log.e(LOGTAG, "Failed to get epgServiceName from channel");
         }
         return res;
-    }
-
-
-    // TODO: remove
-    public static String getStringFromStream(InputStream stream) throws Exception
-    {
-        int n = 0;
-        char[] buffer = new char[1024 * 4];
-        InputStreamReader reader = new InputStreamReader(stream, "UTF8");
-        StringWriter writer = new StringWriter();
-        while (-1 != (n = reader.read(buffer))) writer.write(buffer, 0, n);
-        return writer.toString();
     }
 }

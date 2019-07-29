@@ -14,7 +14,6 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.RequestFuture;
 import com.android.volley.toolbox.Volley;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.minidns.DnsClient;
 import org.minidns.dnsmessage.DnsMessage;
@@ -159,13 +158,10 @@ public class TvClient {
      * Get channels list
      * @return List of channels
      */
-    public ArrayList<JSONObject> getChannelsList(String[] testData) throws Exception {
-        /*
+    public ArrayList<JSONObject> getChannelsList() throws Exception {
         // Get data from service provider
         UdpClient socket = new UdpClient(serviceProvider);
         String[] res = socket.download();
-        */
-        String[] res = testData; // TODO: remove test data
 
         // Extract XML documents from downloaded data
         Document serviceList = null;
