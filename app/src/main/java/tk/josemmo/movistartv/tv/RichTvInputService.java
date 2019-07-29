@@ -55,10 +55,6 @@ public class RichTvInputService extends BaseTvInputService {
      */
     class RichTvInputSessionImpl extends BaseTvInputService.Session {
         private static final String LOGTAG = "RichTvInputService";
-        private static final String UNKNOWN_LANGUAGE = "und";
-        private static final long EPG_SYNC_DELAYED_PERIOD_MS = 2000;
-
-        private final String mInputId;
         private final Context mContext;
         private AppPlayer mPlayer = null;
 
@@ -70,7 +66,6 @@ public class RichTvInputService extends BaseTvInputService {
         RichTvInputSessionImpl(Context context, String inputId) {
             super(context, inputId);
             mContext = context;
-            mInputId = inputId;
             Log.d(LOGTAG, "Started service");
         }
 
@@ -91,6 +86,8 @@ public class RichTvInputService extends BaseTvInputService {
          */
         private void releasePlayer() {
             if (mPlayer != null) {
+                mPlayer.setSurface(null);
+                mPlayer.stop();
                 mPlayer.release();
                 mPlayer = null;
             }
@@ -114,7 +111,7 @@ public class RichTvInputService extends BaseTvInputService {
          */
         @RequiresApi(api = Build.VERSION_CODES.N)
         public boolean onPlayRecordedProgram(RecordedProgram recordedProgram) {
-            Log.d(LOGTAG, "onPlayRecordedProgram --> " + recordedProgram.getTitle());
+            Log.d(LOGTAG, "onPlayRecordedProgram called");
             notifyVideoUnavailable(TvInputManager.VIDEO_UNAVAILABLE_REASON_UNKNOWN);
             return false;
         }
@@ -128,8 +125,7 @@ public class RichTvInputService extends BaseTvInputService {
          */
         @Override
         public boolean onPlayProgram(@Nullable Program program, long startPosMs) {
-            Log.d(LOGTAG, "onPlayProgram --> " + program);
-
+            Log.d(LOGTAG, "onPlayProgram called");
             Uri channelUri = getCurrentChannelUri();
             Channel channel = ModelUtils.getChannel(mContext.getContentResolver(), channelUri);
             createPlayer(Uri.parse("rtp://@" + channel.getInternalProviderData().getVideoUrl()));
@@ -140,7 +136,7 @@ public class RichTvInputService extends BaseTvInputService {
 
         @Override
         public boolean onTune(Uri channelUri) {
-            Log.d(LOGTAG, "onTune --> " + channelUri);
+            Log.d(LOGTAG, "onTune called with URI " + channelUri);
             return super.onTune(channelUri);
         }
 
@@ -151,6 +147,7 @@ public class RichTvInputService extends BaseTvInputService {
          */
         @Override
         public void onSetCaptionEnabled(boolean b) {
+            Log.d(LOGTAG, "onSetCaptionEnabled called");
             // TODO: subtitles not implemented... yet
         }
 
@@ -172,6 +169,7 @@ public class RichTvInputService extends BaseTvInputService {
          */
         @Override
         public void onBlockContent(TvContentRating rating) {
+            Log.d(LOGTAG, "onBlockContent called");
             super.onBlockContent(rating);
             releasePlayer();
         }

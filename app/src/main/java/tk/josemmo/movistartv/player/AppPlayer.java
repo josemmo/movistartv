@@ -17,9 +17,10 @@
 package tk.josemmo.movistartv.player;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.media.PlaybackParams;
 import android.net.Uri;
-import android.util.Log;
+import android.util.DisplayMetrics;
 import android.view.Surface;
 
 import com.google.android.media.tv.companionlibrary.TvPlayer;
@@ -36,7 +37,6 @@ import java.util.ArrayList;
  * the video, subtitles and all these sorts of things.
  */
 public class AppPlayer implements TvPlayer {
-    private Context context;
     private Uri videoUrl;
     private LibVLC libVlc;
     private MediaPlayer player;
@@ -47,11 +47,14 @@ public class AppPlayer implements TvPlayer {
      * @param videoUrl Video stream URL
      */
     public AppPlayer(Context context, Uri videoUrl) {
-        this.context = context;
         this.videoUrl = videoUrl;
 
         final ArrayList<String> args = new ArrayList<>();
-        args.add("--file-caching=2000");
+        args.add("--network-caching=0"); // In milliseconds
+        args.add("--avcodec-skip-frame=0");
+        args.add("--avcodec-skip-idct=0");
+        args.add("--android-display-chroma=RV16");
+        args.add("--audio-resampler=soxr");
         args.add("-v");
         libVlc = new LibVLC(context, args);
         player = new MediaPlayer(libVlc);
@@ -64,11 +67,8 @@ public class AppPlayer implements TvPlayer {
     public void prepare() {
         final Media media = new Media(libVlc, videoUrl);
         media.setHWDecoderEnabled(true, false);
-        media.addOption(":network-caching=150");
-        media.addOption(":clock-jitter=0");
-        media.addOption(":clock-synchro=0");
-
         player.setMedia(media);
+        media.release();
     }
 
 
@@ -76,9 +76,6 @@ public class AppPlayer implements TvPlayer {
      * Release player
      */
     public void release() {
-        stop();
-        player.getMedia().release();
-        player.getVLCVout().detachViews();
         player.release();
         libVlc.release();
     }
@@ -90,12 +87,11 @@ public class AppPlayer implements TvPlayer {
      */
     @Override
     public void setSurface(Surface surface) {
-        Log.d("VLC_EVENT", "setSurface called with " + surface);
         final IVLCVout vlcVout = player.getVLCVout();
-
         if (surface != null) {
+            DisplayMetrics dm = Resources.getSystem().getDisplayMetrics();
             vlcVout.setVideoSurface(surface, null);
-            vlcVout.setWindowSize(1920, 1080); // TODO
+            vlcVout.setWindowSize(dm.widthPixels, dm.heightPixels);
             vlcVout.attachViews();
         } else {
             vlcVout.detachViews();
@@ -172,19 +168,11 @@ public class AppPlayer implements TvPlayer {
 
 
     @Override
-    public void setPlaybackParams(PlaybackParams params) {
-        // TODO
-    }
-
+    public void setPlaybackParams(PlaybackParams params) {}
 
     @Override
-    public void registerCallback(Callback callback) {
-        // TODO
-    }
-
+    public void registerCallback(Callback callback) {}
 
     @Override
-    public void unregisterCallback(Callback callback) {
-        // TODO
-    }
+    public void unregisterCallback(Callback callback) {}
 }
