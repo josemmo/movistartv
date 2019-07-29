@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Canales de Movistar+ para Android TV</string>
+    <string name="rich_setup_first_step_description">Canales de televisión para abonados a Movistar+</string>
+    <string name="rich_setup_add_channel">Añadir canales</string>
+    <string name="rich_setup_scanning_description">Esto puede durar unos minutos.</string>
+    <string name="rich_setup_cancel">Cancelar búsqueda</string>
+</resources>
