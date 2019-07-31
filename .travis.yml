@@ -27,7 +27,7 @@ cache:
 
 # Build project
 before_script:
-    - openssl aes-256-cbc -K $encrypted_f97d7a1fd3b8_key -iv $encrypted_f97d7a1fd3b8_iv -in keystore.jks.enc -out keystore.jks -d
+    - openssl aes-256-cbc -K $encrypted_3eb2685a17c8_key -iv $encrypted_3eb2685a17c8_iv -in keystore.jks.enc -out keystore.jks -d
     - echo "keystoreFile=keystore.jks" >> gradle.properties
     - echo "keystoreAlias=mainkey" >> gradle.properties
     - echo "keystorePassword=$KEYSTORE_PASS" >> gradle.properties
