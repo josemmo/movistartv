@@ -21,6 +21,14 @@ allprojects {
     }
 }
 
+ext {
+    versionName = '0.0.1-beta'
+    versionCode = 1
+    minSdkVersion = 21
+    targetSdkVersion = 28
+    compileSdkVersion = 28
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }

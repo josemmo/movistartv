@@ -1,22 +1,60 @@
+import com.android.build.OutputFile
+
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "tk.josemmo.movistartv"
-        minSdkVersion 21
-        targetSdkVersion 28
-        versionCode 1
-        versionName "1.0.0"
-    }
-    buildTypes {
-        release {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode rootProject.ext.versionCode
+        versionName rootProject.ext.versionName
     }
     compileOptions {
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    // Signing configurations
+    signingConfigs {
+        release {
+            if (project.hasProperty('keystoreFile')) {
+                storeFile file(project.findProperty('keystoreFile'))
+                keyAlias project.findProperty('keystoreAlias')
+                storePassword project.findProperty('keystorePassword')
+                keyPassword project.findProperty('keystorePassword')
+            }
+        }
+    }
+
+    // APK variants
+    splits {
+        abi {
+            enable true
+            include "x86", "x86_64", "armeabi-v7a", "arm64-v8a"
+        }
+    }
+    def abiCodes = ['x86':5, 'x86_64':8, 'armeabi-v7a':4, 'arm64-v8a':7]
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            def abiName = output.getFilter(OutputFile.ABI)
+            output.outputFileName = "MovistarTV-${variant.versionName}-${abiName}.apk"
+            output.versionCodeOverride = defaultConfig.versionCode*100 + abiCodes.get(abiName, 0)
+        }
+    }
+
+    // Build types
+    buildTypes {
+        release {
+            signingConfig null
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        signedRelease {
+            initWith release
+            signingConfig = signingConfigs.release
+            matchingFallbacks = ['release']
+        }
     }
 }
 
