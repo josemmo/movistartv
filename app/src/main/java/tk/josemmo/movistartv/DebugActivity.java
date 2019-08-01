@@ -7,7 +7,7 @@ import android.os.Bundle;
 
 import com.google.android.media.tv.companionlibrary.sync.EpgSyncJobService;
 
-public class MainActivity extends Activity {
+public class DebugActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

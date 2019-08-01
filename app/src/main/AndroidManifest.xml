@@ -23,14 +23,8 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <!-- Main Activity -->
-        <!-- TODO: remove (for testing) -->
-        <activity android:name=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <!-- Debug Activity, can only be launched from command line. -->
+        <activity android:name=".DebugActivity" android:exported="true" />
 
         <!-- Launched by the TV app before it uses RichTvInputService. This registers channels and
         sets up JobService to provide program information in the background. -->
