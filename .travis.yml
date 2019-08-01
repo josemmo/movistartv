@@ -28,9 +28,19 @@ cache:
 # Build project
 before_script:
     - openssl aes-256-cbc -K $encrypted_3eb2685a17c8_key -iv $encrypted_3eb2685a17c8_iv -in keystore.jks.enc -out keystore.jks -d
-    - echo "keystoreFile=keystore.jks" >> gradle.properties
+    - echo "keystoreFile=$PWD/keystore.jks" >> gradle.properties
     - echo "keystoreAlias=mainkey" >> gradle.properties
     - echo "keystorePassword=$KEYSTORE_PASS" >> gradle.properties
 script:
     - chmod +x ./gradlew
-    - ./gradlew bundleSignedRelease
+    - ./gradlew assembleSignedRelease
+
+# Deploy release
+deploy:
+    provider: releases
+    api_key: $GH_TOKEN
+    file_glob: true
+    file: app/build/outputs/apk/signedRelease/*.apk
+    skip_cleanup: true
+    on:
+        tags: true
