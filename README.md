@@ -1,5 +1,6 @@
 <p align="center">
     <a href="https://github.com/josemmo/movistartv"><img src="logo.png" alt="" width="180"></a><br>
+    <a href="https://travis-ci.com/josemmo/movistartv"><img src="https://travis-ci.com/josemmo/movistartv.svg?branch=master"></a>
     <a href="https://github.com/josemmo/movistartv/releases/latest"><img src="https://img.shields.io/badge/download-apk-10a19b.svg"></a>
     <a href="COPYING"><img src="https://img.shields.io/github/license/josemmo/movistartv.svg"></a>
 </p>
