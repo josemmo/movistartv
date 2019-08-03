@@ -75,14 +75,14 @@ public class EpgDownloader extends Thread {
         byte[] stover = "default|STOVER".getBytes();
 
         // Parse header
-        int epgServiceName = ((b[3] & 0xff) << 8) | (b[4] & 0xff);
         int serviceVersion = b[5] & 0xff;
         int urlLength = b[6] & 0xff;
         String serviceUrl = new String(Arrays.copyOfRange(b, 7, 7+urlLength));
         if (!serviceUrl.contains(".imagenio.es")) {
-            Log.e(LOGTAG, "Invalid service URL for EPG file");
+            Log.d(LOGTAG, "Invalid service URL for EPG file, ignoring data");
             return null;
         }
+        int epgServiceName = Integer.parseInt(serviceUrl.split("\\.", 2)[0]);
 
         // Parse body
         JSONArray programs = new JSONArray();
