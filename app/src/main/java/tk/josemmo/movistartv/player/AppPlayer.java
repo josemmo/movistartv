@@ -46,10 +46,15 @@ public class AppPlayer implements TvPlayer {
      */
     public AppPlayer(Context context) {
         final ArrayList<String> args = new ArrayList<>();
+        args.add("-vv");
+        args.add("--clock-jitter=0");
+        args.add("--clock-synchro=0");
+        args.add("--avcodec-fast");
+        args.add("--avcodec-skiploopfilter=4");
+
         args.add("--network-caching=1000"); // In milliseconds
-        args.add("--android-display-chroma=RV32");
-        args.add("--audio-resampler=soxr");
-        args.add("-v");
+        args.add("--sout-keep");
+
         libVlc = new LibVLC(context, args);
         player = new MediaPlayer(libVlc);
     }
