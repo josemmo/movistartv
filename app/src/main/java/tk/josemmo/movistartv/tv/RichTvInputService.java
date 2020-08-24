@@ -22,6 +22,7 @@ import android.media.tv.TvInputManager;
 import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
+import android.view.Surface;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -53,7 +54,7 @@ public class RichTvInputService extends BaseTvInputService {
      * RichTvInputSessionImpl is an implementation of a TV Input Service session, required
      * by Android TV to render something on screen when a channel of ours is tuned by the user.
      */
-    class RichTvInputSessionImpl extends BaseTvInputService.Session {
+    static class RichTvInputSessionImpl extends BaseTvInputService.Session {
         private static final String LOGTAG = "RichTvInputService";
         private final Context mContext;
         private AppPlayer mPlayer = null;
@@ -103,6 +104,17 @@ public class RichTvInputService extends BaseTvInputService {
         }
 
 
+        @Override
+        public boolean onSetSurface(Surface surface) {
+            Log.d(LOGTAG, "onSetSurface");
+
+            loadTvPlayerIfReleased();
+            mPlayer.setSurface(surface);
+
+            return true;
+        }
+
+
         /**
          * On play program
          * @param  program    Program instance
@@ -117,6 +129,7 @@ public class RichTvInputService extends BaseTvInputService {
 
             loadTvPlayerIfReleased();
             mPlayer.loadMedia("rtp://@" + channel.getInternalProviderData().getVideoUrl());
+
             mPlayer.play();
             return true;
         }
@@ -127,7 +140,6 @@ public class RichTvInputService extends BaseTvInputService {
             Log.d(LOGTAG, "onTune called with URI " + channelUri);
             return super.onTune(channelUri);
         }
-
 
         /**
          * On set caption enabled

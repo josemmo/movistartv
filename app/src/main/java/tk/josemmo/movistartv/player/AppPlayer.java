@@ -22,6 +22,7 @@ import android.media.PlaybackParams;
 import android.net.Uri;
 import android.util.DisplayMetrics;
 import android.view.Surface;
+import android.view.SurfaceView;
 
 import com.google.android.media.tv.companionlibrary.TvPlayer;
 
@@ -45,20 +46,13 @@ public class AppPlayer implements TvPlayer {
      * @param context Context
      */
     public AppPlayer(Context context) {
-        final ArrayList<String> args = new ArrayList<>();
-        args.add("-vv");
-        args.add("--clock-jitter=0");
-        args.add("--clock-synchro=0");
-        args.add("--avcodec-fast");
-        args.add("--avcodec-skiploopfilter=4");
+        ArrayList<String> options = new ArrayList<>();
+        options.add("-vv");
+        options.add("--aout=opensles");
 
-        args.add("--network-caching=1000"); // In milliseconds
-        args.add("--sout-keep");
-
-        libVlc = new LibVLC(context, args);
+        libVlc = new LibVLC(context, options);
         player = new MediaPlayer(libVlc);
     }
-
 
     /**
      * Load media
@@ -68,7 +62,6 @@ public class AppPlayer implements TvPlayer {
         loadMedia(Uri.parse(mediaUri));
     }
 
-
     /**
      * Load media
      * @param mediaUri Media URI
@@ -76,10 +69,16 @@ public class AppPlayer implements TvPlayer {
     public void loadMedia(Uri mediaUri) {
         final Media media = new Media(libVlc, mediaUri);
         media.setHWDecoderEnabled(true, false);
+        media.addOption(":clock-jitter=0");
+        media.addOption(":clock-synchro=0");
+        media.addOption(":network-caching=1000"); // In milliseconds
+        media.addOption(":sout-keep");
+        media.addOption(":audio-time-stretch");
+
         player.setMedia(media);
+
         media.release();
     }
-
 
     /**
      * Release player
@@ -88,7 +87,6 @@ public class AppPlayer implements TvPlayer {
         player.release();
         libVlc.release();
     }
-
 
     /**
      * Set surface
@@ -99,7 +97,7 @@ public class AppPlayer implements TvPlayer {
         final IVLCVout vlcVout = player.getVLCVout();
         if (surface != null) {
             DisplayMetrics dm = Resources.getSystem().getDisplayMetrics();
-            vlcVout.setVideoSurface(surface, null);
+            vlcVout.setVideoSurface(surface,null);
             vlcVout.setWindowSize(dm.widthPixels, dm.heightPixels);
             vlcVout.attachViews();
         } else {
