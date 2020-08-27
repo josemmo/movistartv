@@ -2,7 +2,5 @@
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">172.26.22.23</domain>
-        <domain includeSubdomains="true">telefonica.net</domain>
-        <domain includeSubdomains="true">19.119.112.45</domain>
     </domain-config>
 </network-security-config>

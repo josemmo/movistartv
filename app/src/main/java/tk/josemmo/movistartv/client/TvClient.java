@@ -13,23 +13,14 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.RequestFuture;
 import com.android.volley.toolbox.Volley;
-import com.google.gson.Gson;
 
 import org.json.JSONObject;
-import org.minidns.DnsClient;
-import org.minidns.dnsmessage.DnsMessage;
-import org.minidns.dnsmessage.Question;
-import org.minidns.record.A;
-import org.minidns.record.CNAME;
-import org.minidns.record.Record;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.InputStream;
-import java.net.InetAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -44,12 +35,11 @@ public class TvClient {
     private static final String LOGTAG = "TvClient";
     private static final String EPG_ENTRYPOINT_KEY = "epgEntrypoints";
     private static final int MAX_EPG_DAYS = 2;
-    private static final String DNS_SERVER = "172.26.23.3";
+    private static final String RESOURCES_SERVER = "172.26.22.23";
     private static final String ENDPOINT = "http://172.26.22.23:2001/appserver/mvtv.do?action=";
 
     private SharedPreferences prefs;
     private RequestQueue requestQueue;
-    private DnsClient dnsClient;
 
     private String dvbEntrypoint;
     private int demarcation;
@@ -66,7 +56,6 @@ public class TvClient {
     public TvClient(Context ctx) {
         prefs = ctx.getApplicationContext().getSharedPreferences("TvClientData", Context.MODE_PRIVATE);
         requestQueue = Volley.newRequestQueue(ctx);
-        dnsClient = new DnsClient();
         configureInstance();
     }
 
@@ -93,24 +82,16 @@ public class TvClient {
 
 
     /**
-     * Resolve hostname
+     * Resolve resources hostname
      * @param  input Input URL
      * @return       Resolved URL
      */
-    private String resolveHostname(String input) {
+    private String resolveResourcesHostname(String input) {
         try {
             URL url = new URL(input);
-            Question dnsQuestion = new Question(url.getHost(), Record.TYPE.A);
-            DnsMessage res = dnsClient.query(dnsQuestion, InetAddress.getByName(DNS_SERVER));
-
-            // Modify cast
-            DataInputStream data = new DataInputStream(new ByteArrayInputStream(res.answerSection.get(0).payloadData.toByteArray()));
-            A record = A.parse(data);
-
-            String ipAddress = record.toString();
-            return url.toString().replace(url.getHost(), ipAddress);
+            return url.toString().replace(url.getHost(), RESOURCES_SERVER);
         } catch (Exception e) {
-            Log.e(LOGTAG, "Failed to resolve hostname of " + input);
+            Log.e(LOGTAG, "Failed to parse URL " + input);
             e.printStackTrace();
             return input;
         }
@@ -135,7 +116,7 @@ public class TvClient {
             String[] tvPackages = client.getString("tvPackages").split("\\|");
             this.tvPackages = Arrays.asList(tvPackages);
             dvbEntrypoint = platform.getJSONObject("dvbConfig").getString("dvbipiEntryPoint");
-            resBaseUri = resolveHostname(platform.getString("RES_BASE_URI"));
+            resBaseUri = resolveResourcesHostname(platform.getString("RES_BASE_URI"));
             tvChannelLogoPath = config.getString("tvChannelLogoPath");
             tvCoversPath = config.getString("tvCoversPath") +
                     config.getString("portraitSubPath") + "290x429/";
