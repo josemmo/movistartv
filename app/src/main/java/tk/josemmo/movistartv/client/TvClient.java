@@ -13,18 +13,21 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.RequestFuture;
 import com.android.volley.toolbox.Volley;
+import com.google.gson.Gson;
 
 import org.json.JSONObject;
 import org.minidns.DnsClient;
 import org.minidns.dnsmessage.DnsMessage;
 import org.minidns.dnsmessage.Question;
 import org.minidns.record.A;
+import org.minidns.record.CNAME;
 import org.minidns.record.Record;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URL;
@@ -99,10 +102,13 @@ public class TvClient {
             URL url = new URL(input);
             Question dnsQuestion = new Question(url.getHost(), Record.TYPE.A);
             DnsMessage res = dnsClient.query(dnsQuestion, InetAddress.getByName(DNS_SERVER));
-            A record = (A) res.answerSection.get(0).payloadData;
+
+            // Modify cast
+            DataInputStream data = new DataInputStream(new ByteArrayInputStream(res.answerSection.get(0).payloadData.toByteArray()));
+            A record = A.parse(data);
+
             String ipAddress = record.toString();
-            String newUrl = url.toString().replace(url.getHost(), ipAddress);
-            return newUrl;
+            return url.toString().replace(url.getHost(), ipAddress);
         } catch (Exception e) {
             Log.e(LOGTAG, "Failed to resolve hostname of " + input);
             e.printStackTrace();
@@ -181,7 +187,9 @@ public class TvClient {
         }
 
         // Extract EPG entrypoints (for later)
-        saveEpgEntrypoints(epgDiscovery);
+        if (epgDiscovery != null) {
+            saveEpgEntrypoints(epgDiscovery);
+        }
 
         // Generate array of services (channel data)
         SparseArray<Element> services = new SparseArray<>();
@@ -218,6 +226,7 @@ public class TvClient {
         // Generate final channel list
         ArrayList<JSONObject> channels = new ArrayList<>();
         for (int i=0; i<serviceNames.size(); i++) {
+            Log.d(LOGTAG, "Pass " + i + " of " + serviceNames.size());
             int dial = serviceNames.keyAt(i);
             int serviceName = serviceNames.get(dial);
             Element service = services.get(serviceName);
@@ -233,7 +242,13 @@ public class TvClient {
 
             Element location = (Element) service.getElementsByTagName("ServiceLocation").item(0);
             location = (Element) location.getElementsByTagName("IPMulticastAddress").item(0);
-            String address = location.getAttribute("Address") + ":" + location.getAttribute("Port");
+
+            String address;
+            if (location == null) {
+                continue;
+            } else {
+                address = location.getAttribute("Address") + ":" + location.getAttribute("Port");
+            }
 
             String name = info.getElementsByTagName("Name").item(0).getTextContent();
             String shortName = info.getElementsByTagName("ShortName").item(0).getTextContent();
