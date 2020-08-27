@@ -104,13 +104,16 @@ public class RichTvInputService extends BaseTvInputService {
         }
 
 
+        /**
+         * On set surface
+         * @param  surface Surface
+         * @return         Success
+         */
         @Override
         public boolean onSetSurface(Surface surface) {
-            Log.d(LOGTAG, "onSetSurface");
-
+            Log.d(LOGTAG, "onSetSurface called");
             loadTvPlayerIfReleased();
             mPlayer.setSurface(surface);
-
             return true;
         }
 
@@ -140,6 +143,7 @@ public class RichTvInputService extends BaseTvInputService {
             Log.d(LOGTAG, "onTune called with URI " + channelUri);
             return super.onTune(channelUri);
         }
+
 
         /**
          * On set caption enabled

@@ -22,7 +22,6 @@ import android.media.PlaybackParams;
 import android.net.Uri;
 import android.util.DisplayMetrics;
 import android.view.Surface;
-import android.view.SurfaceView;
 
 import com.google.android.media.tv.companionlibrary.TvPlayer;
 
@@ -54,6 +53,7 @@ public class AppPlayer implements TvPlayer {
         player = new MediaPlayer(libVlc);
     }
 
+
     /**
      * Load media
      * @param mediaUri Media URI
@@ -61,6 +61,7 @@ public class AppPlayer implements TvPlayer {
     public void loadMedia(String mediaUri) {
         loadMedia(Uri.parse(mediaUri));
     }
+
 
     /**
      * Load media
@@ -80,6 +81,7 @@ public class AppPlayer implements TvPlayer {
         media.release();
     }
 
+
     /**
      * Release player
      */
@@ -87,6 +89,7 @@ public class AppPlayer implements TvPlayer {
         player.release();
         libVlc.release();
     }
+
 
     /**
      * Set surface
@@ -97,7 +100,7 @@ public class AppPlayer implements TvPlayer {
         final IVLCVout vlcVout = player.getVLCVout();
         if (surface != null) {
             DisplayMetrics dm = Resources.getSystem().getDisplayMetrics();
-            vlcVout.setVideoSurface(surface,null);
+            vlcVout.setVideoSurface(surface, null);
             vlcVout.setWindowSize(dm.widthPixels, dm.heightPixels);
             vlcVout.attachViews();
         } else {
@@ -175,11 +178,19 @@ public class AppPlayer implements TvPlayer {
 
 
     @Override
-    public void setPlaybackParams(PlaybackParams params) {}
+    public void setPlaybackParams(PlaybackParams params) {
+        // This method is intentionally left blank
+    }
+
 
     @Override
-    public void registerCallback(Callback callback) {}
+    public void registerCallback(Callback callback) {
+        // This method is intentionally left blank
+    }
+
 
     @Override
-    public void unregisterCallback(Callback callback) {}
+    public void unregisterCallback(Callback callback) {
+        // This method is intentionally left blank
+    }
 }

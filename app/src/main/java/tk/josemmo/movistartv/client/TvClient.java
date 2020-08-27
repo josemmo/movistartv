@@ -168,7 +168,9 @@ public class TvClient {
         }
 
         // Extract EPG entrypoints (for later)
-        if (epgDiscovery != null) {
+        if (epgDiscovery == null) {
+            Log.w(LOGTAG, "Invalid EPG discovery response");
+        } else {
             saveEpgEntrypoints(epgDiscovery);
         }
 
@@ -207,7 +209,7 @@ public class TvClient {
         // Generate final channel list
         ArrayList<JSONObject> channels = new ArrayList<>();
         for (int i=0; i<serviceNames.size(); i++) {
-            Log.d(LOGTAG, "Pass " + i + " of " + serviceNames.size());
+            Log.d(LOGTAG, "Parsing channel #" + i + " out of " + serviceNames.size());
             int dial = serviceNames.keyAt(i);
             int serviceName = serviceNames.get(dial);
             Element service = services.get(serviceName);
@@ -223,13 +225,11 @@ public class TvClient {
 
             Element location = (Element) service.getElementsByTagName("ServiceLocation").item(0);
             location = (Element) location.getElementsByTagName("IPMulticastAddress").item(0);
-
-            String address;
             if (location == null) {
+                Log.w(LOGTAG, "Found channel without IP Address at dial " + dial);
                 continue;
-            } else {
-                address = location.getAttribute("Address") + ":" + location.getAttribute("Port");
             }
+            String address = location.getAttribute("Address") + ":" + location.getAttribute("Port");
 
             String name = info.getElementsByTagName("Name").item(0).getTextContent();
             String shortName = info.getElementsByTagName("ShortName").item(0).getTextContent();
