@@ -22,7 +22,6 @@ import android.media.tv.TvInputManager;
 import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
-import android.view.Surface;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -101,20 +100,6 @@ public class RichTvInputService extends BaseTvInputService {
             Log.d(LOGTAG, "onPlayRecordedProgram called");
             notifyVideoUnavailable(TvInputManager.VIDEO_UNAVAILABLE_REASON_UNKNOWN);
             return false;
-        }
-
-
-        /**
-         * On set surface
-         * @param  surface Surface
-         * @return         Success
-         */
-        @Override
-        public boolean onSetSurface(Surface surface) {
-            Log.d(LOGTAG, "onSetSurface called");
-            loadTvPlayerIfReleased();
-            mPlayer.setSurface(surface);
-            return true;
         }
 
 

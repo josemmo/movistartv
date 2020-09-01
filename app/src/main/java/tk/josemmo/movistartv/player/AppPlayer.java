@@ -25,10 +25,10 @@ import android.view.Surface;
 
 import com.google.android.media.tv.companionlibrary.TvPlayer;
 
-import org.videolan.libvlc.IVLCVout;
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
+import org.videolan.libvlc.interfaces.IVLCVout;
 
 import java.util.ArrayList;
 
@@ -46,8 +46,22 @@ public class AppPlayer implements TvPlayer {
      */
     public AppPlayer(Context context) {
         ArrayList<String> options = new ArrayList<>();
-        options.add("-vv");
-        options.add("--aout=opensles");
+        options.add("-vvv");
+
+        // Stream-related options
+        options.add("--http-reconnect");
+        options.add("--clock-jitter=0");
+        options.add("--clock-synchro=0");
+
+        // Speed-up decoding in low-end devices
+        options.add("--avcodec-hurry-up");
+        options.add("--avcodec-skiploopfilter=4");
+        options.add("--avcodec-skip-idct=4");
+        options.add("--avcodec-fast");
+
+        // Enable deinterlacing
+        options.add("--deinterlace=1");
+        options.add("--deinterlace-mode=yadif");
 
         libVlc = new LibVLC(context, options);
         player = new MediaPlayer(libVlc);
@@ -70,14 +84,7 @@ public class AppPlayer implements TvPlayer {
     public void loadMedia(Uri mediaUri) {
         final Media media = new Media(libVlc, mediaUri);
         media.setHWDecoderEnabled(true, false);
-        media.addOption(":clock-jitter=0");
-        media.addOption(":clock-synchro=0");
-        media.addOption(":network-caching=1000"); // In milliseconds
-        media.addOption(":sout-keep");
-        media.addOption(":audio-time-stretch");
-
         player.setMedia(media);
-
         media.release();
     }
 
